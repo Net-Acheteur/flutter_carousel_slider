@@ -34,15 +34,19 @@ class CarouselSlider extends StatefulWidget {
 
   final int? itemCount;
 
+  final bool forZoom;
+
   CarouselSlider(
       {required this.items,
       required this.options,
       carouselController,
-      Key? key})
+      Key? key,
+      bool? forZoom})
       : itemBuilder = null,
         itemCount = items != null ? items.length : 0,
         _carouselController = carouselController ??
             CarouselController() as CarouselControllerImpl,
+        forZoom = forZoom ?? false,
         super(key: key);
 
   /// The on demand item builder constructor
@@ -51,10 +55,12 @@ class CarouselSlider extends StatefulWidget {
       required this.itemBuilder,
       required this.options,
       carouselController,
-      Key? key})
+      Key? key,
+      bool? forZoom})
       : items = null,
         _carouselController = carouselController ??
             CarouselController() as CarouselControllerImpl,
+        forZoom = forZoom ?? false,
         super(key: key);
 
   @override
@@ -218,6 +224,29 @@ class CarouselSliderState extends State<CarouselSlider>
     );
   }
 
+  Widget getGestureWrapperForZoom(Widget child) {
+    Widget wrapper;
+    if (widget.options.height != null) {
+      wrapper = Container(height: widget.options.height, child: child);
+    } else {
+      wrapper =
+          AspectRatio(aspectRatio: widget.options.aspectRatio, child: child);
+    }
+    return GestureDetector(
+      child: NotificationListener(
+        onNotification: (dynamic notification) {
+          if (widget.options.onScrolled != null && notification is ScrollUpdateNotification) {
+            widget.options.onScrolled!(carouselState!.pageController!.page);
+          }
+          return false;
+        },
+        child: wrapper,
+      ),
+      behavior: HitTestBehavior.opaque,
+      dragStartBehavior: DragStartBehavior.start,
+    );
+  }
+
   Widget getCenterWrapper(Widget child) {
     if (widget.options.disableCenter) {
       return Container(
@@ -263,7 +292,7 @@ class CarouselSliderState extends State<CarouselSlider>
 
   @override
   Widget build(BuildContext context) {
-    return getGestureWrapper(PageView.builder(
+    Widget child = PageView.builder(
       physics: widget.options.scrollPhysics,
       scrollDirection: widget.options.scrollDirection,
       pageSnapping: widget.options.pageSnapping,
@@ -332,7 +361,8 @@ class CarouselSliderState extends State<CarouselSlider>
           },
         );
       },
-    ));
+    );
+    return widget.forZoom ? getGestureWrapperForZoom(child) : getGestureWrapper(child);
   }
 }
 
