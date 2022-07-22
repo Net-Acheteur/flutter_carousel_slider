@@ -1,3 +1,20 @@
+# 4.1.1
+
+- Fix code formatting
+
+# 4.1.0
+
+## Add
+
+- Exposed `clipBehavior` in `CarouselOptions`
+- Exposed `padEnds` in `CarouselOptions`
+- Add `copyWith` method to `CarouselOptions`
+
+## Fix
+
+- [FIX] Can't swipe on web with Flutter 2.5
+
+
 # 4.0.0
 
 - Support null safety (Null safety isn't a breaking change and is Backward compatible meaning you can use it with non-null safe code too)

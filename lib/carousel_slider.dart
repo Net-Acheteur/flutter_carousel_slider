@@ -3,7 +3,6 @@ library carousel_slider;
 import 'dart:async';
 
 import 'package:carousel_slider/carousel_state.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -39,13 +38,14 @@ class CarouselSlider extends StatefulWidget {
   CarouselSlider(
       {required this.items,
       required this.options,
-      carouselController,
+      CarouselController? carouselController,
       Key? key,
       bool? forZoom})
       : itemBuilder = null,
         itemCount = items != null ? items.length : 0,
-        _carouselController = carouselController ??
-            CarouselController() as CarouselControllerImpl,
+        _carouselController = carouselController != null
+            ? carouselController as CarouselControllerImpl
+            : CarouselController() as CarouselControllerImpl,
         forZoom = forZoom ?? false,
         super(key: key);
 
@@ -54,12 +54,13 @@ class CarouselSlider extends StatefulWidget {
       {required this.itemCount,
       required this.itemBuilder,
       required this.options,
-      carouselController,
+      CarouselController? carouselController,
       Key? key,
       bool? forZoom})
       : items = null,
-        _carouselController = carouselController ??
-            CarouselController() as CarouselControllerImpl,
+        _carouselController = carouselController != null
+            ? carouselController as CarouselControllerImpl
+            : CarouselController() as CarouselControllerImpl,
         forZoom = forZoom ?? false,
         super(key: key);
 
@@ -212,7 +213,7 @@ class CarouselSliderState extends State<CarouselSlider>
         }),
       },
       child: NotificationListener(
-        onNotification: (dynamic notification) {
+        onNotification: (Notification notification) {
           if (widget.options.onScrolled != null &&
               notification is ScrollUpdateNotification) {
             widget.options.onScrolled!(carouselState!.pageController!.page);
@@ -293,6 +294,13 @@ class CarouselSliderState extends State<CarouselSlider>
   @override
   Widget build(BuildContext context) {
     Widget child = PageView.builder(
+      padEnds: widget.options.padEnds,
+      scrollBehavior: ScrollConfiguration.of(context).copyWith(
+        scrollbars: false,
+        overscroll: false,
+        dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+      ),
+      clipBehavior: widget.options.clipBehavior,
       physics: widget.options.scrollPhysics,
       scrollDirection: widget.options.scrollDirection,
       pageSnapping: widget.options.pageSnapping,
@@ -320,14 +328,21 @@ class CarouselSliderState extends State<CarouselSlider>
             double distortionValue = 1.0;
             // if `enlargeCenterPage` is true, we must calculate the carousel item's height
             // to display the visual effect
+
             if (widget.options.enlargeCenterPage != null &&
                 widget.options.enlargeCenterPage == true) {
-              double itemOffset;
               // pageController.page can only be accessed after the first build,
               // so in the first build we calculate the itemoffset manually
-              try {
-                itemOffset = carouselState!.pageController!.page! - idx;
-              } catch (e) {
+              double itemOffset = 0;
+              var position = carouselState?.pageController?.position;
+              if (position != null &&
+                  position.hasPixels &&
+                  position.hasContentDimensions) {
+                var _page = carouselState?.pageController?.page;
+                if (_page != null) {
+                  itemOffset = _page - idx;
+                }
+              } else {
                 BuildContext storageContext = carouselState!
                     .pageController!.position.context.storageContext;
                 final double? previousSavedPosition =
@@ -340,6 +355,7 @@ class CarouselSliderState extends State<CarouselSlider>
                       carouselState!.realPage.toDouble() - idx.toDouble();
                 }
               }
+
               final num distortionRatio =
                   (1 - (itemOffset.abs() * 0.3)).clamp(0.0, 1.0);
               distortionValue =

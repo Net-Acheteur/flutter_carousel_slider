@@ -55,7 +55,7 @@ class CarouselOptions {
   /// Defaults to [Curves.fastOutSlowIn].
   final Curve autoPlayCurve;
 
-  /// Determines if current page should be larger then the side images,
+  /// Determines if current page should be larger than the side images,
   /// creating a feeling of depth in the carousel.
   ///
   /// Defaults to false.
@@ -115,6 +115,15 @@ class CarouselOptions {
   /// Whether or not to disable the `Center` widget for each slide.
   final bool disableCenter;
 
+  /// Whether to add padding to both ends of the list.
+  /// If this is set to true and [viewportFraction] < 1.0, padding will be added such that the first and last child slivers will be in the center of the viewport when scrolled all the way to the start or end, respectively.
+  /// If [viewportFraction] >= 1.0, this property has no effect.
+  /// This property defaults to true and must not be null.
+  final bool padEnds;
+
+  /// Exposed clipBehavior of PageView
+  final Clip clipBehavior;
+
   CarouselOptions({
     this.height,
     this.aspectRatio: 16 / 9,
@@ -138,5 +147,64 @@ class CarouselOptions {
     this.pageViewKey,
     this.enlargeStrategy: CenterPageEnlargeStrategy.scale,
     this.disableCenter: false,
+    this.padEnds = true,
+    this.clipBehavior: Clip.hardEdge,
   });
+
+  ///Generate new [CarouselOptions] based on old ones.
+
+  CarouselOptions copyWith(
+          {double? height,
+          double? aspectRatio,
+          double? viewportFraction,
+          int? initialPage,
+          bool? enableInfiniteScroll,
+          bool? reverse,
+          bool? autoPlay,
+          Duration? autoPlayInterval,
+          Duration? autoPlayAnimationDuration,
+          Curve? autoPlayCurve,
+          bool? enlargeCenterPage,
+          Function(int index, CarouselPageChangedReason reason)? onPageChanged,
+          ValueChanged<double?>? onScrolled,
+          ScrollPhysics? scrollPhysics,
+          bool? pageSnapping,
+          Axis? scrollDirection,
+          bool? pauseAutoPlayOnTouch,
+          bool? pauseAutoPlayOnManualNavigate,
+          bool? pauseAutoPlayInFiniteScroll,
+          PageStorageKey? pageViewKey,
+          CenterPageEnlargeStrategy? enlargeStrategy,
+          bool? disableCenter,
+          Clip? clipBehavior,
+          bool? padEnds}) =>
+      CarouselOptions(
+        height: height ?? this.height,
+        aspectRatio: aspectRatio ?? this.aspectRatio,
+        viewportFraction: viewportFraction ?? this.viewportFraction,
+        initialPage: initialPage ?? this.initialPage,
+        enableInfiniteScroll: enableInfiniteScroll ?? this.enableInfiniteScroll,
+        reverse: reverse ?? this.reverse,
+        autoPlay: autoPlay ?? this.autoPlay,
+        autoPlayInterval: autoPlayInterval ?? this.autoPlayInterval,
+        autoPlayAnimationDuration:
+            autoPlayAnimationDuration ?? this.autoPlayAnimationDuration,
+        autoPlayCurve: autoPlayCurve ?? this.autoPlayCurve,
+        enlargeCenterPage: enlargeCenterPage ?? this.enlargeCenterPage,
+        onPageChanged: onPageChanged ?? this.onPageChanged,
+        onScrolled: onScrolled ?? this.onScrolled,
+        scrollPhysics: scrollPhysics ?? this.scrollPhysics,
+        pageSnapping: pageSnapping ?? this.pageSnapping,
+        scrollDirection: scrollDirection ?? this.scrollDirection,
+        pauseAutoPlayOnTouch: pauseAutoPlayOnTouch ?? this.pauseAutoPlayOnTouch,
+        pauseAutoPlayOnManualNavigate:
+            pauseAutoPlayOnManualNavigate ?? this.pauseAutoPlayOnManualNavigate,
+        pauseAutoPlayInFiniteScroll:
+            pauseAutoPlayInFiniteScroll ?? this.pauseAutoPlayInFiniteScroll,
+        pageViewKey: pageViewKey ?? this.pageViewKey,
+        enlargeStrategy: enlargeStrategy ?? this.enlargeStrategy,
+        disableCenter: disableCenter ?? this.disableCenter,
+        clipBehavior: clipBehavior ?? this.clipBehavior,
+        padEnds: padEnds ?? this.padEnds,
+      );
 }
