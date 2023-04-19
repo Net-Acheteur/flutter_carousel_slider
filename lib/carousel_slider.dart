@@ -20,6 +20,8 @@ class CarouselSlider extends StatefulWidget {
   /// [CarouselOptions] to create a [CarouselState] with
   final CarouselOptions options;
 
+  final bool? disableGesture;
+
   /// The widgets to be shown in the carousel of default constructor
   final List<Widget>? items;
 
@@ -38,6 +40,7 @@ class CarouselSlider extends StatefulWidget {
   CarouselSlider(
       {required this.items,
       required this.options,
+      this.disableGesture,
       CarouselController? carouselController,
       Key? key,
       bool? forZoom})
@@ -54,6 +57,7 @@ class CarouselSlider extends StatefulWidget {
       {required this.itemCount,
       required this.itemBuilder,
       required this.options,
+      this.disableGesture,
       CarouselController? carouselController,
       Key? key,
       bool? forZoom})
@@ -131,6 +135,11 @@ class CarouselSliderState extends State<CarouselSlider>
   Timer? getTimer() {
     return widget.options.autoPlay
         ? Timer.periodic(widget.options.autoPlayInterval, (_) {
+            if (!mounted) {
+              clearTimer();
+              return;
+            }
+
             final route = ModalRoute.of(context);
             if (route?.isCurrent == false) {
               return;
@@ -192,7 +201,21 @@ class CarouselSliderState extends State<CarouselSlider>
           AspectRatio(aspectRatio: widget.options.aspectRatio, child: child);
     }
 
+    if (true == widget.disableGesture) {
+      return NotificationListener(
+        onNotification: (Notification notification) {
+          if (widget.options.onScrolled != null &&
+              notification is ScrollUpdateNotification) {
+            widget.options.onScrolled!(carouselState!.pageController!.page);
+          }
+          return false;
+        },
+        child: wrapper,
+      );
+    }
+
     return RawGestureDetector(
+      behavior: HitTestBehavior.opaque,
       gestures: {
         _MultipleGestureRecognizer:
             GestureRecognizerFactoryWithHandlers<_MultipleGestureRecognizer>(
@@ -258,9 +281,22 @@ class CarouselSliderState extends State<CarouselSlider>
   }
 
   Widget getEnlargeWrapper(Widget? child,
-      {double? width, double? height, double? scale}) {
+      {double? width,
+      double? height,
+      double? scale,
+      required double itemOffset}) {
     if (widget.options.enlargeStrategy == CenterPageEnlargeStrategy.height) {
       return SizedBox(child: child, width: width, height: height);
+    }
+    if (widget.options.enlargeStrategy == CenterPageEnlargeStrategy.zoom) {
+      late Alignment alignment;
+      final bool horizontal = options.scrollDirection == Axis.horizontal;
+      if (itemOffset > 0) {
+        alignment = horizontal ? Alignment.centerRight : Alignment.bottomCenter;
+      } else {
+        alignment = horizontal ? Alignment.centerLeft : Alignment.topCenter;
+      }
+      return Transform.scale(child: child, scale: scale!, alignment: alignment);
     }
     return Transform.scale(
         scale: scale!,
@@ -298,7 +334,10 @@ class CarouselSliderState extends State<CarouselSlider>
       scrollBehavior: ScrollConfiguration.of(context).copyWith(
         scrollbars: false,
         overscroll: false,
-        dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+        },
       ),
       clipBehavior: widget.options.clipBehavior,
       physics: widget.options.scrollPhysics,
@@ -328,12 +367,11 @@ class CarouselSliderState extends State<CarouselSlider>
             double distortionValue = 1.0;
             // if `enlargeCenterPage` is true, we must calculate the carousel item's height
             // to display the visual effect
-
+            double itemOffset = 0;
             if (widget.options.enlargeCenterPage != null &&
                 widget.options.enlargeCenterPage == true) {
               // pageController.page can only be accessed after the first build,
               // so in the first build we calculate the itemoffset manually
-              double itemOffset = 0;
               var position = carouselState?.pageController?.position;
               if (position != null &&
                   position.hasPixels &&
@@ -356,8 +394,10 @@ class CarouselSliderState extends State<CarouselSlider>
                 }
               }
 
+              final double enlargeFactor =
+                  options.enlargeFactor.clamp(0.0, 1.0);
               final num distortionRatio =
-                  (1 - (itemOffset.abs() * 0.3)).clamp(0.0, 1.0);
+                  (1 - (itemOffset.abs() * enlargeFactor)).clamp(0.0, 1.0);
               distortionValue =
                   Curves.easeOut.transform(distortionRatio as double);
             }
@@ -368,11 +408,14 @@ class CarouselSliderState extends State<CarouselSlider>
 
             if (widget.options.scrollDirection == Axis.horizontal) {
               return getCenterWrapper(getEnlargeWrapper(child,
-                  height: distortionValue * height, scale: distortionValue));
+                  height: distortionValue * height,
+                  scale: distortionValue,
+                  itemOffset: itemOffset));
             } else {
               return getCenterWrapper(getEnlargeWrapper(child,
                   width: distortionValue * MediaQuery.of(context).size.width,
-                  scale: distortionValue));
+                  scale: distortionValue,
+                  itemOffset: itemOffset));
             }
           },
         );

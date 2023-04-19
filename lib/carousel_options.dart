@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 enum CarouselPageChangedReason { timed, manual, controller }
 
-enum CenterPageEnlargeStrategy { scale, height }
+enum CenterPageEnlargeStrategy { scale, height, zoom }
 
 class CarouselOptions {
   /// Set carousel height and overrides any existing [aspectRatio].
@@ -27,6 +27,11 @@ class CarouselOptions {
   ///
   ///Defaults to true, i.e. infinite loop.
   final bool enableInfiniteScroll;
+
+  ///Determines if carousel should loop to the closest occurence of requested page.
+  ///
+  ///Defaults to true.
+  final bool animateToClosest;
 
   /// Reverse the order of items if set to true.
   ///
@@ -109,8 +114,12 @@ class CarouselOptions {
   /// Pass a `PageStoragekey` if you want to keep the pageview's position when it was recreated.
   final PageStorageKey? pageViewKey;
 
-  /// Use `enlargeStrategy` to determine which method to enlarge the center page.
+  /// Use [enlargeStrategy] to determine which method to enlarge the center page.
   final CenterPageEnlargeStrategy enlargeStrategy;
+
+  /// How much the pages next to the center page will be scaled down.
+  /// If `enlargeCenterPage` is false, this property has no effect.
+  final double enlargeFactor;
 
   /// Whether or not to disable the `Center` widget for each slide.
   final bool disableCenter;
@@ -130,6 +139,7 @@ class CarouselOptions {
     this.viewportFraction: 0.8,
     this.initialPage: 0,
     this.enableInfiniteScroll: true,
+    this.animateToClosest: true,
     this.reverse: false,
     this.autoPlay: false,
     this.autoPlayInterval: const Duration(seconds: 4),
@@ -146,6 +156,7 @@ class CarouselOptions {
     this.pauseAutoPlayInFiniteScroll: false,
     this.pageViewKey,
     this.enlargeStrategy: CenterPageEnlargeStrategy.scale,
+    this.enlargeFactor: 0.3,
     this.disableCenter: false,
     this.padEnds = true,
     this.clipBehavior: Clip.hardEdge,
@@ -175,6 +186,7 @@ class CarouselOptions {
           bool? pauseAutoPlayInFiniteScroll,
           PageStorageKey? pageViewKey,
           CenterPageEnlargeStrategy? enlargeStrategy,
+          double? enlargeFactor,
           bool? disableCenter,
           Clip? clipBehavior,
           bool? padEnds}) =>
@@ -203,6 +215,7 @@ class CarouselOptions {
             pauseAutoPlayInFiniteScroll ?? this.pauseAutoPlayInFiniteScroll,
         pageViewKey: pageViewKey ?? this.pageViewKey,
         enlargeStrategy: enlargeStrategy ?? this.enlargeStrategy,
+        enlargeFactor: enlargeFactor ?? this.enlargeFactor,
         disableCenter: disableCenter ?? this.disableCenter,
         clipBehavior: clipBehavior ?? this.clipBehavior,
         padEnds: padEnds ?? this.padEnds,
